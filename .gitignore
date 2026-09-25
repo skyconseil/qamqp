@@ -4,3 +4,12 @@
 /Debug
 /GeneratedFiles
 build
+
+# qmake / Xcode outputs generated in place by the Guidor build (scripts/qmake_xcode.sh)
+moc/
+*.xcodeproj/
+.xcode/
+Debug-iphoneos/
+Debug-iphonesimulator/
+Release-iphoneos/
+Release-iphonesimulator/
