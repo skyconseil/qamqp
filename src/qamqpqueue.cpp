@@ -122,6 +122,7 @@ void QAmqpQueuePrivate::_q_content(const QAmqpContentFrame &frame)
     if (currentMessage.d->leftSize == 0) {
         // message with an empty body
         q->enqueue(currentMessage);
+        currentMessage = QAmqpMessage();
         Q_EMIT q->messageReceived();
     }
 }
@@ -142,6 +143,8 @@ void QAmqpQueuePrivate::_q_body(const QAmqpContentBodyFrame &frame)
     currentMessage.d->leftSize -= frame.body().size();
     if (currentMessage.d->leftSize == 0) {
         q->enqueue(currentMessage);
+        // a complete message is handed over; stray frames after this point have no message to feed
+        currentMessage = QAmqpMessage();
         Q_EMIT q->messageReceived();
     }
 }
@@ -249,6 +252,9 @@ void QAmqpQueuePrivate::deliver(const QAmqpMethodFrame &frame)
     QString consumer = QAmqpFrame::readAmqpField(in, QAmqpMetaType::ShortString).toString();
     if (consumerTag != consumer) {
         qAmqpDebug() << Q_FUNC_INFO << "invalid consumer tag: " << consumer;
+        // The content frames that follow belong to this rejected delivery: they must not be appended to
+        // the previous message, which is still held here and already enqueued (shared data).
+        currentMessage = QAmqpMessage();
         return;
     }
 
